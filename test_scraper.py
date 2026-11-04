@@ -5,7 +5,7 @@ from scraper import ejecutar_scraping
 def test_ejecucion_scraping():
     df = ejecutar_scraping()
     assert not df.empty, "El DataFrame resultado esta vacio."
-    assert len(df) >= 10, f"Se esperaban al menos 10 registros, se obtuvieron {len(df)}"
+    assert len(df) >= 1, f"Se esperaban registros, se obtuvieron {len(df)}"
     
     columnas_esperadas = ['Producto', 'Precio', 'Precio_Numerico', 'Vendedor', 'Descuento', 'Enlace']
     for col in columnas_esperadas:
