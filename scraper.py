@@ -14,6 +14,7 @@ def ejecutar_scraping():
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920,1080")
+    chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
@@ -26,7 +27,7 @@ def ejecutar_scraping():
 
     url = "https://listado.mercadolibre.com.co/laptops"
     driver.get(url)
-    time.sleep(5)
+    time.sleep(8)
 
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     driver.quit()
@@ -40,7 +41,13 @@ def ejecutar_scraping():
 
         precio_tag = prod.find('span', class_='andes-money-amount__fraction')
         precio_texto = f"$ {precio_tag.text.strip()}" if precio_tag else "No disponible"
-        precio_num = int(precio_tag.text.strip().replace('.', '')) if precio_tag else None
+        
+        precio_num = None
+        if precio_tag:
+            try:
+                precio_num = int(precio_tag.text.strip().replace('.', ''))
+            except ValueError:
+                precio_num = None
 
         vendedor_tag = prod.find('span', class_='poly-component__seller')
         vendedor = vendedor_tag.text.strip() if vendedor_tag else "No especificado"
