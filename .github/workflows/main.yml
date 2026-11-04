@@ -29,7 +29,7 @@ jobs:
     - name: Instalar dependencias del proyecto
       run: |
         python -m pip install --upgrade pip
-        pip install pandas beautifulsoup4 selenium webdriver-manager pytest
+        pip install -r requirements.txt
 
     - name: Ejecutar pruebas automatizadas con pytest (CI)
       run: |
