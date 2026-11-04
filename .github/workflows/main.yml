@@ -5,6 +5,7 @@ on:
     branches: [ "main", "feature/*" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -35,11 +36,13 @@ jobs:
       run: |
         pytest test_scraper.py
 
-    - name: Generar artefacto de despliegue (CD)
+    - name: Ejecutar scraping en vivo (opcional)
+      if: ${{ github.event_name == 'workflow_dispatch' }}
       run: |
         python scraper.py
 
     - name: Subir dataset CSV como Artefacto de GitHub
+      if: ${{ hashFiles('laptops_mercadolibre.csv') != '' }}
       uses: actions/upload-artifact@v4
       with:
         name: dataset-laptops-csv
