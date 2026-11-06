@@ -1,6 +1,4 @@
-pandas
-beautifulsoup4
-selenium
-webdriver-manager
-pytest
-requests
+pandas==2.3.3
+beautifulsoup4==4.15.0
+pytest==9.2.0
+requests==2.34.2

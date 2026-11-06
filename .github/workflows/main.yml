@@ -1,4 +1,4 @@
-name: CI y scraping manual de Mercado Libre
+name: CI y scraping manual de libros
 
 on:
   push:
@@ -28,9 +28,9 @@ jobs:
     - name: Instalar dependencias del proyecto
       run: python -m pip install -r requirements.txt
 
-    # La prueba simula Chrome y el HTML; no necesita navegador ni visitar el sitio.
+    # Las pruebas usan HTML local y no consultan el sitio externo.
     - name: Ejecutar pruebas automatizadas con pytest (CI)
-      run: python -m pytest test_scraper.py -v
+      run: python -m pytest -v
 
   scraping-local:
     name: Scraping manual en Windows
@@ -57,17 +57,18 @@ jobs:
     - name: Instalar dependencias del proyecto
       run: .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 
-    # Chrome debe estar instalado en el equipo del runner.
-    - name: Ejecutar scraping en vivo
-      run: |
-        if (Test-Path -LiteralPath "laptops_mercadolibre.csv") {
-          Remove-Item -LiteralPath "laptops_mercadolibre.csv" -ErrorAction Stop
-        }
-        .\.venv\Scripts\python.exe scraper.py
+    # El catalogo se obtiene por HTTP; no requiere Chrome ni Selenium.
+    - name: Extraer catalogo de Books to Scrape
+      run: .\.venv\Scripts\python.exe scraper.py
 
-    - name: Subir dataset CSV como Artefacto de GitHub
+    - name: Generar historico de ventas SIMULADAS
+      run: .\.venv\Scripts\python.exe generar_ventas.py
+
+    - name: Subir catalogo e historico simulado
       uses: actions/upload-artifact@v4
       with:
-        name: dataset-laptops-csv
-        path: laptops_mercadolibre.csv
+        name: datasets-libros
+        path: |
+          data/libros_books_to_scrape.csv
+          data/ventas_simuladas.csv
         if-no-files-found: error
