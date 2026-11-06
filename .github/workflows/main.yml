@@ -1,15 +1,20 @@
-name: Pipeline CI/CD Scraping Mercado Libre
+name: CI y scraping manual de Mercado Libre
 
 on:
   push:
-    branches: [ "main", "feature/*" ]
+    branches: [ "main", "feature/**" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
+    name: Pruebas en GitHub
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
     - name: Checkout del repositorio
@@ -20,30 +25,49 @@ jobs:
       with:
         python-version: "3.10"
 
-    - name: Instalar Google Chrome (Headless)
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y wget curl unzip
-        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-        sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get install -f -y
+    - name: Instalar dependencias del proyecto
+      run: python -m pip install -r requirements.txt
+
+    # La prueba simula Chrome y el HTML; no necesita navegador ni visitar el sitio.
+    - name: Ejecutar pruebas automatizadas con pytest (CI)
+      run: python -m pytest test_scraper.py -v
+
+  scraping-local:
+    name: Scraping manual en Windows
+    needs: build-and-test
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+    - name: Checkout del repositorio
+      uses: actions/checkout@v4
+
+    - name: Configurar Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Crear entorno virtual para esta ejecucion
+      run: python -m venv .venv
 
     - name: Instalar dependencias del proyecto
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      run: .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 
-    - name: Ejecutar pruebas automatizadas con pytest (CI)
+    # Chrome debe estar instalado en el equipo del runner.
+    - name: Ejecutar scraping en vivo
       run: |
-        pytest test_scraper.py
-
-    - name: Ejecutar scraping en vivo (opcional)
-      if: ${{ github.event_name == 'workflow_dispatch' }}
-      run: |
-        python scraper.py
+        if (Test-Path -LiteralPath "laptops_mercadolibre.csv") {
+          Remove-Item -LiteralPath "laptops_mercadolibre.csv" -ErrorAction Stop
+        }
+        .\.venv\Scripts\python.exe scraper.py
 
     - name: Subir dataset CSV como Artefacto de GitHub
-      if: ${{ hashFiles('laptops_mercadolibre.csv') != '' }}
       uses: actions/upload-artifact@v4
       with:
         name: dataset-laptops-csv
         path: laptops_mercadolibre.csv
+        if-no-files-found: error
